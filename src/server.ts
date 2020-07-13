@@ -1,4 +1,4 @@
-import Player from './Models/Player';
+import NetworkObject from './Models/NetworkObject';
 import Socket from 'socket.io';
 
 const io = Socket();
@@ -6,23 +6,20 @@ io.listen(process.env.PORT || 52300);
 
 console.log(`Server has started`);
 
-// let players: Record<string, object> = {};
-// let sockets: Record<string, object> = {};
-
 let players: Record<string, object> = {};
 let sockets: Record<string, object> = {};
 
 io.on('connection', (socket) => {
 
-    let player = new Player();
-    let socketPlayerId = player.id;
+    let networkObject = new NetworkObject();
+    let socketPlayerId = networkObject.id;
 
-    players[socketPlayerId] = player;
+    players[socketPlayerId] = networkObject;
     sockets[socketPlayerId] = socket;
 
     socket.emit('register', { id: socketPlayerId });
-    socket.emit('spawn', player);
-    socket.broadcast.emit('spawn', player);
+    socket.emit('spawn', networkObject);
+    socket.broadcast.emit('spawn', networkObject);
 
     console.log(`Player [${socketPlayerId}] has connected!`);
 
@@ -33,16 +30,16 @@ io.on('connection', (socket) => {
     }
 
     socket.on("updatePosition", (data) => {
-        player.position.x = data.position.x;
-        player.position.y = data.position.y;
+        networkObject.position.x = data.position.x;
+        networkObject.position.y = data.position.y;
 
-        socket.broadcast.emit('updatePosition', player);
+        socket.broadcast.emit('updatePosition', networkObject);
     });
 
     socket.on('disconnect', () => {
         console.log(`Player [${socketPlayerId}] has disconnected`);
         delete players[socketPlayerId];
         delete sockets[socketPlayerId];
-        socket.broadcast.emit('disconnected', player);
+        socket.broadcast.emit('disconnected', networkObject);
     });
 });
